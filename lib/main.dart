@@ -50,7 +50,7 @@ String evaluate(num n1, String opr, num n2) {
   if (number == number.toInt()) {
     return number.toInt().toString(); // Return integer if no fractional part
   } else {
-    return double.parse(number.toStringAsFixed(2)).toString(); // Return double with limited decimal points
+    return double.parse(number.toStringAsFixed(3)).toString(); // Return double with limited decimal points
   }
 }
 
@@ -147,6 +147,7 @@ class _CalculatorState extends State<Calculator> {
                           button(child: coloredText('Ac', lightGrey, 32), color: isLightMode? Colors.white:grey,
                             onPressed: (){
                               setState(() {
+                                isAnswer = false;
                                 equation = '';num1='';num2='';opr='';
                               });
                             }
@@ -174,12 +175,8 @@ class _CalculatorState extends State<Calculator> {
                               });
                             }
                           ),
-                          button(child: coloredText('/', lightBlue), color: isLightMode? lightModeOpr:darkBlue,
-                              onPressed: (){handleOperation('/');}
-                          ),
-                          button(child: coloredText('*', lightBlue), color: isLightMode? lightModeOpr:darkBlue,
-                              onPressed: (){handleOperation('*');}
-                          ),
+                          oprPressed('/'),
+                          oprPressed('*'),
                         ],
                       ),
                     ),
@@ -192,18 +189,10 @@ class _CalculatorState extends State<Calculator> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          button(child: coloredText('7', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                            onPressed: (){handleNumber('7');}
-                          ),
-                          button(child: coloredText('8', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                              onPressed: (){handleNumber('8');}
-                          ),
-                          button(child: coloredText('9', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                              onPressed: (){handleNumber('9');}
-                          ),
-                          button(child: coloredText('-', lightBlue), color: isLightMode? lightModeOpr:darkBlue,
-                              onPressed: (){handleOperation('-');}
-                          ),
+                          numberPressed('7'),
+                          numberPressed('8'),
+                          numberPressed('9'),
+                          oprPressed('-'),
                         ],
                       ),
                     ),
@@ -216,18 +205,10 @@ class _CalculatorState extends State<Calculator> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          button(child: coloredText('4', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                              onPressed: (){handleNumber('4');}
-                          ),
-                          button(child: coloredText('5', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                              onPressed: (){handleNumber('5');}
-                          ),
-                          button(child: coloredText('6', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                              onPressed: (){handleNumber('6');}
-                          ),
-                          button(child: coloredText('+', lightBlue), color: isLightMode? lightModeOpr:darkBlue,
-                              onPressed: (){handleOperation('+');}
-                          ),
+                          numberPressed('4'),
+                          numberPressed('5'),
+                          numberPressed('6'),
+                          oprPressed('+'),
                         ],
                       ),
                     ),
@@ -248,15 +229,9 @@ class _CalculatorState extends State<Calculator> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      button(child: coloredText('1', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                                          onPressed: (){handleNumber('1');}
-                                      ),
-                                      button(child: coloredText('2', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                                          onPressed: (){handleNumber('2');}
-                                      ),
-                                      button(child: coloredText('3', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                                          onPressed: (){handleNumber('3');}
-                                      ),
+                                      numberPressed('1'),
+                                      numberPressed('2'),
+                                      numberPressed('3'),
                                     ],
                                   ),
                                 ),
@@ -273,13 +248,27 @@ class _CalculatorState extends State<Calculator> {
                                         child: Row(
                                           crossAxisAlignment: CrossAxisAlignment.stretch,
                                           children: [
-                                            button(child: coloredText('0', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                                                onPressed: (){handleNumber('0');}
-                                            ),
+                                            numberPressed('0'),
                                           ],
                                         ),
                                       ), 
-                                      button(child: coloredText('.', lightBlue), color: isLightMode? Colors.white:lightBlack),
+                                      button(child: coloredText('.', lightBlue), color: isLightMode? Colors.white:lightBlack,
+                                        onPressed: () {
+                                          setState(() {
+                                            if (opr.isNotEmpty) {
+                                              if (!num2.contains('.')){
+                                                num2 += '.';
+                                                equation += '.';
+                                              }
+                                            } else {
+                                              if (!num1.contains('.')){
+                                                num1 += '.';
+                                                equation += '.';
+                                              }
+                                            }
+                                          });
+                                        },
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -319,6 +308,18 @@ class _CalculatorState extends State<Calculator> {
     );
   }
 
+  Widget numberPressed(String number){
+    return button(child: coloredText(number, lightBlue), color: isLightMode? Colors.white:lightBlack,
+        onPressed: (){handleNumber(number);}
+    );
+  }
+
+  Widget oprPressed(String opr){
+    return button(child: coloredText(opr, lightBlue), color: isLightMode? lightModeOpr:darkBlue,
+        onPressed: (){handleOperation(opr);}
+    );
+  }
+
   void handleOperation(String operation) {
     setState(() {
       if (opr.isNotEmpty) {
@@ -343,14 +344,20 @@ class _CalculatorState extends State<Calculator> {
 
   void handleNumber(String number) {
     setState(() {
-      if (opr.isEmpty){
-        num1+= number;
+      if (!isAnswer) {
+        if (opr.isEmpty){
+          num1+= number;
+          equation += number;
+        }
+        else {
+          num2 += number;
+          equation += number;
+        }
+      }
+      else{
+        num1 = number;
         equation = num1;
         isAnswer = false;
-      }
-      else {
-        num2 += number;
-        equation += number;
       }
     });
   }
