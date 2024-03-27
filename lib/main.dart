@@ -340,11 +340,11 @@ class _CalculatorState extends State<Calculator> {
   void handleOperation(String operation) {
     if (!isAnswer) {
       if (equation.isNotEmpty && (isNum(equation[equation.length-1]) || equation[equation.length-1] == ')')){
-        number = "";
+        number = "";dotCounter=0;
         equation +=operation;
       }
       else if(equation.isEmpty && operation == '-'){
-        number = "";
+        number = "";dotCounter=0;
         equation +=operation;
       }
     }
