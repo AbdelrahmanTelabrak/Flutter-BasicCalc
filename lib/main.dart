@@ -56,6 +56,8 @@ String numConversion(double n) {
   }
 }
 
+bool isNum(String str) => ('0123456789'.contains(str));
+
 String removeLastChar(String str) {
   if(str.isNotEmpty)
     return str.substring(0, str.length - 1);
@@ -63,7 +65,7 @@ String removeLastChar(String str) {
 }
 
 class Calculator extends StatefulWidget {
-  Calculator({super.key});
+  const Calculator({super.key});
 
   @override
   State<Calculator> createState() => _CalculatorState();
@@ -337,7 +339,11 @@ class _CalculatorState extends State<Calculator> {
 
   void handleOperation(String operation) {
     if (!isAnswer) {
-      if (equation.isNotEmpty && ("0123456789".contains(equation[equation.length-1]) || equation[equation.length-1] == ')')){
+      if (equation.isNotEmpty && (isNum(equation[equation.length-1]) || equation[equation.length-1] == ')')){
+        number = "";
+        equation +=operation;
+      }
+      else if(equation.isEmpty && operation == '-'){
         number = "";
         equation +=operation;
       }
@@ -429,7 +435,7 @@ class _CalculatorState extends State<Calculator> {
 
   void handleEqual() {
     if (equation.isNotEmpty) {
-      if ("0123456789".contains(equation[equation.length - 1]) ||
+      if (isNum(equation[equation.length - 1]) ||
           equation[equation.length - 1] == '.' ||
           equation[equation.length - 1] == ')') {
         isAnswer = true;
@@ -454,11 +460,12 @@ class _CalculatorState extends State<Calculator> {
     var values = StackDS<double>();
     var i = 0;
     while (i < postfix.length) {
-      if ("0123456789".contains(postfix[i])) {
+      if (isNum(postfix[i])|| (postfix[i]=='-' && (i==0 || (i<postfix.length-1 && isNum(postfix[i+1]))))) {
         var j = i;
         var num = "";
         while ((j < postfix.length &&
-                ("0123456789".contains(postfix[j]) || postfix[j] == '.')) &&
+            (isNum(postfix[j]) || postfix[j] == '.' ||
+                (postfix[j]=='-' && (j==0 || (!isNum(postfix[j-1])&& postfix[j-1]!=" "))))) &&
             postfix[j] != ' ') {
           num += postfix[j++];
         }
@@ -497,16 +504,17 @@ class _CalculatorState extends State<Calculator> {
     var i = 0;
 
     while (i < tokens.length) {
-      if ("0123456789".contains(tokens[i])) {
+      if (isNum(tokens[i]) || (tokens[i]=='-' && (i==0 || !isNum(tokens[i-1])))) {
         var j = i;
         //println("j = $j")
 
-        while (j < tokens.length &&
-            ("0123456789".contains(tokens[j]) || tokens[j] == '.')) {
+        while (j < tokens.length &&(
+            (isNum(tokens[j]) || tokens[j] == '.') ||
+            (tokens[j]=='-' && (j==0 || !isNum(tokens[j-1]))))) {
           if (tokens[j] == '.') {
             var k = j + 1;
-            if ("0123456789".contains(postFix[postFix.length - 1]) &&
-                "0123456789".contains(tokens[k])) {
+            if (isNum(postFix[postFix.length - 1]) &&
+                isNum(tokens[k])) {
               postFix += tokens[j++];
             }
           } else
@@ -559,6 +567,7 @@ class _CalculatorState extends State<Calculator> {
     print("Postfix: $postFix");
     return postFix;
   }
+
 
   double applyOp(String op, double a, double b) {
     switch (op) {
