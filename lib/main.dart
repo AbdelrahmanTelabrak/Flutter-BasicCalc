@@ -1,8 +1,10 @@
 import 'dart:ffi';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_calculator/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'stack.dart';
 
 void main() {
   runApp(const MainApp());
@@ -35,9 +37,9 @@ num evaluateEquation(num n1, String opr, num n2){
       return n1 + n2;
     case '-':
       return n1 - n2;
-    case '*':
+    case '×':
       return n1 * n2;
-    case '/':
+    case '÷':
       return n1 / n2;
   // Add more cases for other operators as needed
     default:
@@ -45,13 +47,19 @@ num evaluateEquation(num n1, String opr, num n2){
   }
 }
 
-String evaluate(num n1, String opr, num n2) {
-  double number = double.parse(evaluateEquation(n1, opr, n2).toString());
+String numConversion(double n) {
+  double number = n;
   if (number == number.toInt()) {
     return number.toInt().toString(); // Return integer if no fractional part
   } else {
     return double.parse(number.toStringAsFixed(3)).toString(); // Return double with limited decimal points
   }
+}
+
+String removeLastChar(String str) {
+  if(str.isNotEmpty)
+    return str.substring(0, str.length - 1);
+  return '';
 }
 
 class Calculator extends StatefulWidget {
@@ -63,8 +71,10 @@ class Calculator extends StatefulWidget {
 
 class _CalculatorState extends State<Calculator> {
   String equation = '';
-  String num1 = '', num2 = '';
-  String opr = '';
+  String number = '';
+  String answer = '';
+  int dotCounter = 0;
+  bool isOpen = false;
   bool isAnswer = false;
   bool isLightMode = false;
 
@@ -95,7 +105,7 @@ class _CalculatorState extends State<Calculator> {
                 children: [
                   Text(
                     equation,
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.justify,
                     style: TextStyle(
                       fontSize: 24,
                       color: isAnswer? grey : Colors.transparent,
@@ -103,14 +113,22 @@ class _CalculatorState extends State<Calculator> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Text(
-                    isAnswer? '=$num1' : equation,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 48,
-                      color: isLightMode? Colors.black : Colors.white,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: isAnswer? false : true,
+                    child: Row(
+                      children: [
+                        Text(
+                          isAnswer? '=$answer' : equation,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 48,
+                            color: isLightMode? Colors.black : Colors.white,
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -120,18 +138,18 @@ class _CalculatorState extends State<Calculator> {
               flex: 5,
               child: Column(
                 children: [
-                  Expanded(
+                  const Expanded(
                     flex: 2,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      padding: EdgeInsets.symmetric(vertical: 10.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          button(child: SvgPicture.asset('assets/icons/e.svg'), color: isLightMode? Colors.white:lightBlack),
-                          button(child: SvgPicture.asset('assets/icons/mu.svg'), color: isLightMode? Colors.white:lightBlack),
-                          button(child: SvgPicture.asset('assets/icons/sin.svg'), color: isLightMode? Colors.white:lightBlack),
-                          button(child: SvgPicture.asset('assets/icons/deg.svg'), color: isLightMode? Colors.white:lightBlack),
+                          // bracketPressed(),
+                          // button(child: SvgPicture.asset('assets/icons/mu.svg'), color: isLightMode? Colors.white:lightBlack),
+                          // button(child: SvgPicture.asset('assets/icons/sin.svg'), color: isLightMode? Colors.white:lightBlack),
+                          // button(child: SvgPicture.asset('assets/icons/deg.svg'), color: isLightMode? Colors.white:lightBlack),
                         ],
                       ),
                     ),
@@ -147,36 +165,29 @@ class _CalculatorState extends State<Calculator> {
                           button(child: coloredText('Ac', lightGrey, 32), color: isLightMode? Colors.white:grey,
                             onPressed: (){
                               setState(() {
-                                isAnswer = false;
-                                equation = '';num1='';num2='';opr='';
+                                equation = '';number = '';answer = '';
+                                dotCounter = 0;
+                                isOpen = false;isAnswer = false;
                               });
                             }
                           ),
-                          button(child: SvgPicture.asset('assets/icons/backspace.svg'), color: isLightMode? Colors.white:grey,
-                            onPressed: (){
-                              setState(() {
-                                if (isAnswer){
-                                  equation = '';num1='';num2='';opr='';
-                                  isAnswer = false;
-                                  return;
-                                }
-                                equation = equation.substring(0, equation.length-1);
-                                if(opr.isNotEmpty){
-                                  if(num2.isNotEmpty){
-                                    num2 = num2.substring(0, num2.length-1);
-                                  }
-                                  else {
-                                    opr = '';
-                                  }
-                                }
-                                else{
-                                  num1 = num1.substring(0, num1.length-1);
-                                }
-                              });
-                            }
-                          ),
-                          oprPressed('/'),
-                          oprPressed('*'),
+                          // button(child: SvgPicture.asset('assets/icons/backspace.svg'), color: isLightMode? Colors.white:grey,
+                          //   onPressed: (){
+                          //     if (isAnswer){
+                          //       equation = '';number = '';answer = '';
+                          //       dotCounter = 0;
+                          //       isOpen = false;isAnswer = false;
+                          //     }
+                          //     else {
+                          //       equation = removeLastChar(equation);
+                          //       number = removeLastChar(number);
+                          //     }
+                          //     setState(() {});
+                          //   }
+                          // ),
+                          bracketPressed(),
+                          oprPressed('÷'),
+                          oprPressed('×'),
                         ],
                       ),
                     ),
@@ -252,23 +263,7 @@ class _CalculatorState extends State<Calculator> {
                                           ],
                                         ),
                                       ), 
-                                      button(child: coloredText('.', lightBlue), color: isLightMode? Colors.white:lightBlack,
-                                        onPressed: () {
-                                          setState(() {
-                                            if (opr.isNotEmpty) {
-                                              if (!num2.contains('.')){
-                                                num2 += '.';
-                                                equation += '.';
-                                              }
-                                            } else {
-                                              if (!num1.contains('.')){
-                                                num1 += '.';
-                                                equation += '.';
-                                              }
-                                            }
-                                          });
-                                        },
-                                      ),
+                                      dotPressed(),
                                     ],
                                   ),
                                 ),
@@ -281,17 +276,7 @@ class _CalculatorState extends State<Calculator> {
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Column(
                               children: [
-                                button(child: coloredText('=', Colors.white), color: isLightMode? lightModeEqual:lightBlue,
-                                  onPressed: (){
-                                    setState(() {
-                                      if (num2.isNotEmpty){
-                                        num1 = evaluate(num.parse(num1), opr, num.parse(num2));
-                                        isAnswer = true;
-                                        num2='';opr='';
-                                      }
-                                    });
-                                  }
-                                ),
+                                equalPressed(),
                               ],
                             ),
                           ),
@@ -314,6 +299,36 @@ class _CalculatorState extends State<Calculator> {
     );
   }
 
+  void handleNumber(String char) {
+    if (!isAnswer) {
+      if (char == "0"){
+        if (number.isEmpty){
+          number+=char;
+          equation += number;
+        }
+        else if (!(number.length == 1 && equation[0] == '0')){
+          number +=char;
+          equation += char;
+        }
+      }
+      else if (char.isNotEmpty && int.tryParse(char) != null){
+        number += char;
+        equation += char;
+      }
+    }
+    else {
+      equation = '';number = '';answer = '';
+      dotCounter = 0;
+      isOpen = false;isAnswer = false;
+      if (char.isNotEmpty && int.tryParse(char) != null) {
+        number += char;
+        equation += char;
+      }
+    }
+
+    setState(() {});
+  }
+
   Widget oprPressed(String opr){
     return button(child: coloredText(opr, lightBlue), color: isLightMode? lightModeOpr:darkBlue,
         onPressed: (){handleOperation(opr);}
@@ -321,44 +336,258 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void handleOperation(String operation) {
-    setState(() {
-      if (opr.isNotEmpty) {
-        if (num2.isNotEmpty) {
-          print('num1: $num1, num2: $num2');
-          num1 = evaluate(num.parse(num1), opr, num.parse(num2)).toString();
-          equation = num1+operation;
-          opr = operation;
-          num2 = '';
-          print('$equation');
-        }
-      } else {
-        if (num1.isNotEmpty) {
-          opr = operation;
-          equation = num1+opr;
-          print('$equation');
-          isAnswer = false;
-        }
+    if (!isAnswer) {
+      if (equation.isNotEmpty && ("0123456789".contains(equation[equation.length-1]) || equation[equation.length-1] == ')')){
+        number = "";
+        equation +=operation;
       }
-    });
+    }
+    else {
+      equation = answer; number = '';answer = '';
+      dotCounter = 0;
+      isOpen = false;isAnswer = false;
+      equation +=operation;
+    }
+    setState(() {});
   }
 
-  void handleNumber(String number) {
-    setState(() {
-      if (!isAnswer) {
-        if (opr.isEmpty){
-          num1+= number;
-          equation += number;
-        }
-        else {
-          num2 += number;
-          equation += number;
+  Widget dotPressed(){
+    return button(child: coloredText('.', lightBlue), color: isLightMode? Colors.white:lightBlack,
+      onPressed: () {
+        handleDot();
+      },
+    );
+  }
+
+  void handleDot(){
+    if (number.isEmpty)
+    {
+      number += "0.";
+      equation += "0.";
+      dotCounter++;
+    }
+    else if (equation[equation.length-1] != '.' && dotCounter == 0){
+      equation +='.';
+      dotCounter++;
+    }
+    setState(() {});
+  }
+
+  Widget bracketPressed(){
+    return button(child: coloredText('( )', lightBlue, 32), color: isLightMode? Colors.white:lightBlack,
+      onPressed: () => handleBrackets(),
+    );
+  }
+
+  void handleBrackets() {
+    if (equation.isEmpty) {
+      equation += '(';
+      isOpen = true;
+    } else if (number.isEmpty) {
+      equation += '(';
+      isOpen = true;
+    } else {
+      // Handle cases with closing bracket or unmatched closing brackets
+      int closingBracketCount = 0;
+      int openingBracketCount = 0;
+      for (int i = 0; i < equation.length; i++) {
+        if (equation[i] == '(') {
+          openingBracketCount++;
+        } else if (equation[i] == ')') {
+          closingBracketCount++;
         }
       }
-      else{
-        num1 = number;
-        equation = num1;
-        isAnswer = false;
+
+      if (closingBracketCount < openingBracketCount) {
+        // Need to add a closing bracket
+        equation += ')';
+      } else if (equation[equation.length - 1] == ')') {
+        // Handle case where a closing bracket is followed by an operator
+        equation += '×('; // Add multiplication symbol before opening bracket
+        number = "";
+        isOpen = true;
+      } else {
+        // Handle first opening bracket or unmatched closing bracket message
+        if (!isOpen) {
+          equation += '×(';
+          number = "";
+          isOpen = true;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unmatched Closing Bracket')));
+        }
       }
-    });
+    }
+    setState(() {});
+  }
+
+  Widget equalPressed(){
+    return button(child: coloredText('=', Colors.white), color: isLightMode? lightModeEqual:lightBlue,
+        onPressed: () => handleEqual(),
+    );
+  }
+
+  void handleEqual() {
+    if (equation.isNotEmpty) {
+      if ("0123456789".contains(equation[equation.length - 1]) ||
+          equation[equation.length - 1] == '.' ||
+          equation[equation.length - 1] == ')') {
+        isAnswer = true;
+        if (evaluatePostfix(toPostfix(equation)) % 1 == 0.0) {
+          answer = numConversion(evaluatePostfix(toPostfix(equation)));
+        } else {
+          answer = numConversion(evaluatePostfix(toPostfix(equation)));// equation = "";
+        }
+        number = "";
+        isOpen = false;
+        dotCounter = 0;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid Format')),
+        );
+      }
+      setState(() {});
+    }
+  }
+
+  double evaluatePostfix(String postfix) {
+    var values = StackDS<double>();
+    var i = 0;
+    while (i < postfix.length) {
+      if ("0123456789".contains(postfix[i])) {
+        var j = i;
+        var num = "";
+        while ((j < postfix.length &&
+                ("0123456789".contains(postfix[j]) || postfix[j] == '.')) &&
+            postfix[j] != ' ') {
+          num += postfix[j++];
+        }
+        i = j - 1;
+        values.push(double.parse(num));
+      } else {
+        if (postfix[i] != ' ') {
+          var a = values.pop();
+          var b = values.pop();
+          print("operator : ${postfix[i]}");
+          print("a : $a");
+          print("b : $b");
+          if (postfix[i] == '(' || postfix[i] == ')') {
+            while (postfix[i] == '(' || postfix[i] == ')') {
+              i++;
+            }
+            values.push(applyOp(postfix[i], b, a));
+          } else {
+            print("operator before fun: ${postfix[i]}");
+            values.push(applyOp(postfix[i], b, a));
+          }
+        }
+      }
+      i++;
+      print("Stack: $values");
+      print("i = $i, PostFix length = ${postfix.length}");
+    }
+    return values.top();
+  }
+
+  String toPostfix(String equation) {
+    var tokens = equation.split('');
+    print(tokens);
+    var postFix = "";
+    var ops = StackDS<String>();
+    var i = 0;
+
+    while (i < tokens.length) {
+      if ("0123456789".contains(tokens[i])) {
+        var j = i;
+        //println("j = $j")
+
+        while (j < tokens.length &&
+            ("0123456789".contains(tokens[j]) || tokens[j] == '.')) {
+          if (tokens[j] == '.') {
+            var k = j + 1;
+            if ("0123456789".contains(postFix[postFix.length - 1]) &&
+                "0123456789".contains(tokens[k])) {
+              postFix += tokens[j++];
+            }
+          } else
+            postFix += tokens[j++];
+        }
+        print("postfix = $postFix");
+        i = j - 1;
+        postFix += " ";
+        //println("i = $i")
+      } else {
+        print("symbol = ${tokens[i]}");
+        if ((ops.isEmpty() || ops.top() == '(') && tokens[i] != ')') {
+          ops.push(tokens[i]);
+        } else {
+          if (tokens[i] == '^' && ops.top() == '^') {
+            ops.push(tokens[i]);
+            postFix += " ";
+          } else if (opValue(tokens[i]) > opValue(ops.top())) {
+            ops.push(tokens[i]);
+            postFix += " ";
+          } else if (tokens[i] == '(') {
+            ops.push(tokens[i]);
+          }
+          else if (tokens[i] == ')') {
+            while (!ops.isEmpty() && ops.top() != '(') {
+              postFix += ops.top();
+              ops.pop();
+            }
+
+            ops.pop();
+          } else {
+            while (!ops.isEmpty() && opValue(tokens[i]) <= opValue(ops.top())) {
+              postFix += ops.top();
+              ops.pop();
+            }
+            ops.push(tokens[i]);
+            postFix += " ";
+          }
+        }
+      }
+      ops.toString();
+      i++;
+    }
+
+    if (ops.size() > 0) {
+      for (int j = 0; j <= ops.size(); j++) {
+        postFix += ops.pop();
+      }
+    }
+    print("Postfix: $postFix");
+    return postFix;
+  }
+
+  double applyOp(String op, double a, double b) {
+    switch (op) {
+      case '+':
+        return a + b;
+      case '-':
+        return a - b;
+      case '×': // Multiplication symbol in Dart
+        return a * b;
+      case '÷': // Division symbol in Dart
+        {
+          if (b == 0.0) throw UnsupportedError("Cannot divide by zero");
+          return a / b;
+        }
+      case '^':
+        return pow(a, b).toDouble();
+      default:
+        return 0.0;
+    }
+  }
+
+  int opValue(String op) {
+    if (op == '+' || op == '-')
+      return 1;
+    else if (op == '×' || op == '÷')
+      return 2;
+    else if (op == '^')
+      return 3;
+    else
+      return -1;
   }
 }
